@@ -1,0 +1,71 @@
+@Override
+public void start(Stage primaryStage) {
+    ComboBox<String> yearComboBox = createComboBox();
+
+    TableView<Constructors> tableView = new TableView<>();
+
+    TableColumn<Constructors, String> nameColumn = new TableColumn<>("Constructor Name");
+    nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+    TableColumn<Constructors, Integer> winsColumn = new TableColumn<>("Wins");
+    winsColumn.setCellValueFactory(new PropertyValueFactory<>("wins"));
+
+    TableColumn<Constructors, Integer> totalPointsColumn = new TableColumn<>("Total Points");
+    totalPointsColumn.setCellValueFactory(new PropertyValueFactory<>("totalPoints"));
+
+    TableColumn<Constructors, Integer> rankColumn = new TableColumn<>("Rank");
+    rankColumn.setCellValueFactory(new PropertyValueFactory<>("seasonRank"));
+
+    tableView.getColumns().add(nameColumn);
+    tableView.getColumns().add(winsColumn);
+    tableView.getColumns().add(totalPointsColumn);
+    tableView.getColumns().add(rankColumn);
+
+    yearComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+        if (newValue != null) {
+            try {
+                int selectedYear = Integer.parseInt(newValue);
+                ConstructorsRepository constructorsRepository = new ConstructorsRepository();
+                List<Constructors> results = constructorsRepository.getResultByYear(selectedYear);
+                if (results != null) {
+                    tableView.setItems(FXCollections.observableArrayList(results));
+                } else {
+                    System.out.println("No se encontraron resultados para el año " + selectedYear);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+
+    VBox vbox = new VBox(yearComboBox, tableView);
+    Scene scene = new Scene(vbox, 400, 400);
+
+    primaryStage.setScene(scene);
+    primaryStage.setTitle("Constructor Results");
+    primaryStage.show();
+}
+
+public ComboBox<String> createComboBox() {
+    ComboBox<String> comboBox = new ComboBox<>();
+    comboBox.setPrefSize(100, 10);
+
+    SeasonRepository seasonRepository = new SeasonRepository();
+    List<Season> years = seasonRepository.getSeasons().stream()
+            .sorted((s1, s2) -> Integer.compare(s1.getYear(), s2.getYear()))
+            .collect(Collectors.toList());
+
+    for (Season season : years) {
+        comboBox.getItems().add(String.valueOf(season.getYear()));
+    }
+
+    comboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+        System.out.println("Ha seleccionado el año: " + newValue);
+    });
+
+    return comboBox;
+}
+
+public static void main(String[] args) {
+    launch(args);
+}
